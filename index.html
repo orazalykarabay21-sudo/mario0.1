@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Super Jump — Полный Экран</title>
+    <title>Super Jump — Комфортное Управление</title>
     <style>
         * {
             box-sizing: border-box;
@@ -14,7 +14,7 @@
         }
 
         body, html {
-            background-color: #000;
+            background-color: #111; /* Темный фон за пределами игрового поля */
             margin: 0;
             padding: 0;
             overflow: hidden;
@@ -23,21 +23,26 @@
             font-family: monospace;
         }
 
-        /* Игра теперь занимает честные 100% ширины и высоты смартфона */
+        /* Главный контейнер на весь экран */
         .game-container {
             position: relative;
             width: 100%;
             height: 100%;
+            display: flex;
+            flex-direction: column;
             background: #6cbce2;
         }
 
+        /* Игровое поле автоматически оставляет снизу место под кнопки */
         canvas {
             display: block;
             width: 100%;
-            height: 100%;
+            /* Ограничиваем высоту холста, приподнимая его над кнопками */
+            height: calc(100% - 110px); 
+            background: #6cbce2;
         }
 
-        /* Верхняя панель адаптивна к "челкам" и вырезам (viewport-fit=cover) */
+        /* Верхняя панель (счет и скины) */
         .top-bar {
             position: absolute;
             top: env(safe-area-inset-top, 10px);
@@ -90,67 +95,70 @@
             box-shadow: 0 0 8px gold;
         }
 
-        /* Сенсорная панель управления разнесена по краям дисплея */
+        /* Нижняя подложка под кнопки управления. 
+           Она отделяет интерфейс от игры, чтобы пальцы ничего не закрывали!
+        */
         .touch-controls {
             position: absolute;
-            bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+            bottom: 0;
             left: 0;
             width: 100%;
-            padding: 0 calc(20px + env(safe-area-inset-right, 0px)) 0 calc(20px + env(safe-area-inset-left, 0px));
+            height: 120px; /* Фиксированная высота зоны управления */
+            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.6));
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 0 calc(25px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(25px + env(safe-area-inset-left, 0px));
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
             z-index: 10;
-            pointer-events: none;
         }
 
         .d-pad, .action-pad, .system-pad {
-            pointer-events: auto;
+            display: flex;
+            align-items: center;
         }
 
         .d-pad {
-            display: flex;
-            gap: 20px;
+            gap: 25px;
         }
 
+        /* Кнопки стали чуть более плоскими и удобными для постоянных нажатий */
         .ctrl-btn {
-            background: rgba(255, 255, 255, 0.25);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.35);
             color: #fff;
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
-            font-size: 26px;
+            font-size: 28px;
             font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
         .ctrl-btn:active {
-            background: rgba(255, 255, 255, 0.5);
-            transform: scale(0.9);
+            background: rgba(245, 182, 66, 0.6);
+            border-color: #f5b642;
+            transform: scale(0.92);
         }
 
         .system-pad {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 5px;
+            gap: 12px;
         }
 
         .sys-btn {
-            background: rgba(40, 40, 40, 0.7);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(60, 60, 60, 0.8);
+            border: 1px solid rgba(255,255,255,0.15);
             color: #fff;
-            font-size: 12px;
-            padding: 8px 14px;
-            border-radius: 10px;
+            font-size: 11px;
+            padding: 10px 16px;
+            border-radius: 12px;
             font-weight: bold;
         }
         
-        .sys-btn.restart { background: rgba(165, 63, 43, 0.8); }
+        .sys-btn.restart { background: rgba(185, 53, 33, 0.85); }
 
         /* Экран поворота */
         .orientation-warning {
@@ -177,7 +185,7 @@
     <div class="orientation-warning">
         <div style="font-size: 50px;">🔄</div>
         <h2 style="margin-top: 15px;">Пожалуйста, переверните устройство</h2>
-        <p>Для игры на весь экран перейдите в альбомный (горизонтальный) режим.</p>
+        <p>Для комфортной игры перейдите в горизонтальный режим.</p>
     </div>
 
     <div class="game-container">
@@ -208,7 +216,7 @@
             </div>
 
             <div class="action-pad">
-                <div class="ctrl-btn" id="btnJump" style="width: 80px; height: 80px; background: rgba(245, 182, 66, 0.35); border-color: rgba(245, 182, 66, 0.6);">▲</div>
+                <div class="ctrl-btn" id="btnJump" style="width: 85px; height: 85px; font-size: 32px; background: rgba(245, 182, 66, 0.25); border-color: rgba(245, 182, 66, 0.5);">▲</div>
             </div>
         </div>
     </div>
@@ -223,8 +231,8 @@
         let lives = 3;
         let currentSkin = 5; 
         
-        // Базовая высота для логики (чтобы на всех экранах прыжки были одинаковой высоты)
-        const BASE_HEIGHT = 450;
+        // Базовая логическая высота (теперь земля находится прямо у нижнего края видимого холста)
+        const BASE_HEIGHT = 400; 
         let scaleFactor = 1;
         
         const PLAYER_WIDTH = 30;
@@ -247,11 +255,11 @@
         let jumpKeyPressed = false;
         let canJump = true;
 
-        // Функция адаптивного изменения размера под любой экран без искажений
         function resizeCanvas() {
+            // Вычисляем размеры с учетом отступа под панель кнопок
             canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // Рассчитываем масштаб относительно базовой высоты
+            canvas.height = window.innerHeight - 110; 
+            
             scaleFactor = canvas.height / BASE_HEIGHT;
             buildLevel();
         }
@@ -260,48 +268,47 @@
             platforms = [];
             coins = [];
             enemies = [];
-            const groundY = BASE_HEIGHT - 48;
+            const groundY = BASE_HEIGHT - 32; // Земля теперь чуть ниже, задействуя весь холст
             
-            // Земля с островками-пропастями
-            platforms.push({ x: 0, y: groundY, w: 1000, h: 48, type: 'ground' });
-            platforms.push({ x: 1150, y: groundY, w: 900, h: 48, type: 'ground' });
-            platforms.push({ x: 2200, y: groundY, w: 1800, h: 48, type: 'ground' });
+            // Пропасти и платформы
+            platforms.push({ x: 0, y: groundY, w: 1000, h: 32, type: 'ground' });
+            platforms.push({ x: 1150, y: groundY, w: 900, h: 32, type: 'ground' });
+            platforms.push({ x: 2200, y: groundY, w: 1800, h: 32, type: 'ground' });
             
-            // Набор платформ (в координатах базовой высоты 450px)
-            platforms.push({ x: 200, y: groundY - 50, w: 90, h: 20 });
-            platforms.push({ x: 340, y: groundY - 100, w: 90, h: 20 });
-            platforms.push({ x: 480, y: groundY - 150, w: 100, h: 20 });
-            platforms.push({ x: 650, y: groundY - 100, w: 110, h: 20 });
-            platforms.push({ x: 790, y: groundY - 160, w: 80, h: 20 });
-            platforms.push({ x: 930, y: groundY - 90, w: 80, h: 20 });
+            platforms.push({ x: 200, y: groundY - 50, w: 90, h: 18 });
+            platforms.push({ x: 340, y: groundY - 100, w: 90, h: 18 });
+            platforms.push({ x: 480, y: groundY - 150, w: 100, h: 18 });
+            platforms.push({ x: 650, y: groundY - 100, w: 110, h: 18 });
+            platforms.push({ x: 790, y: groundY - 160, w: 80, h: 18 });
+            platforms.push({ x: 930, y: groundY - 90, w: 80, h: 18 });
 
-            platforms.push({ x: 1200, y: groundY - 60, w: 100, h: 20 });
-            platforms.push({ x: 1350, y: groundY - 120, w: 120, h: 20 });
-            platforms.push({ x: 1520, y: groundY - 180, w: 80, h: 20 });
-            platforms.push({ x: 1700, y: groundY - 130, w: 110, h: 20 });
-            platforms.push({ x: 1880, y: groundY - 70, w: 100, h: 20 });
+            platforms.push({ x: 1200, y: groundY - 60, w: 100, h: 18 });
+            platforms.push({ x: 1350, y: groundY - 120, w: 120, h: 18 });
+            platforms.push({ x: 1520, y: groundY - 180, w: 80, h: 18 });
+            platforms.push({ x: 1700, y: groundY - 130, w: 110, h: 18 });
+            platforms.push({ x: 1880, y: groundY - 70, w: 100, h: 18 });
 
-            platforms.push({ x: 2280, y: groundY - 60, w: 120, h: 20 });
-            platforms.push({ x: 2450, y: groundY - 120, w: 90, h: 20 });
-            platforms.push({ x: 2600, y: groundY - 180, w: 150, h: 20 }); 
-            platforms.push({ x: 2820, y: groundY - 130, w: 100, h: 20 });
-            platforms.push({ x: 2980, y: groundY - 80, w: 90, h: 20 });
-            platforms.push({ x: 3140, y: groundY - 140, w: 120, h: 20 });
-            platforms.push({ x: 3350, y: groundY - 180, w: 80, h: 20 });
-            platforms.push({ x: 3500, y: groundY - 110, w: 140, h: 20 }); 
+            platforms.push({ x: 2280, y: groundY - 60, w: 120, h: 18 });
+            platforms.push({ x: 2450, y: groundY - 120, w: 90, h: 18 });
+            platforms.push({ x: 2600, y: groundY - 180, w: 150, h: 18 }); 
+            platforms.push({ x: 2820, y: groundY - 130, w: 100, h: 18 });
+            platforms.push({ x: 2980, y: groundY - 80, w: 90, h: 18 });
+            platforms.push({ x: 3140, y: groundY - 140, w: 120, h: 18 });
+            platforms.push({ x: 3350, y: groundY - 180, w: 80, h: 18 });
+            platforms.push({ x: 3500, y: groundY - 110, w: 140, h: 18 }); 
             
             function addCoin(xx, yy){ coins.push({ x: xx, y: yy, w: 14, h: 14, collected: false }); }
-            addCoin(230, groundY - 80); addCoin(370, groundY - 130); addCoin(510, groundY - 180);
-            addCoin(680, groundY - 130); addCoin(810, groundY - 190); addCoin(1230, groundY - 90);
-            addCoin(1380, groundY - 150); addCoin(1540, groundY - 210); addCoin(1730, groundY - 160);
-            addCoin(2310, groundY - 90); addCoin(2480, groundY - 150); addCoin(2630, groundY - 210);
-            addCoin(2670, groundY - 210); addCoin(2850, groundY - 160); addCoin(3170, groundY - 170);
-            addCoin(3530, groundY - 140); addCoin(3570, groundY - 140);
+            addCoin(230, groundY - 75); addCoin(370, groundY - 125); addCoin(510, groundY - 175);
+            addCoin(680, groundY - 125); addCoin(810, groundY - 185); addCoin(1230, groundY - 85);
+            addCoin(1380, groundY - 145); addCoin(1540, groundY - 205); addCoin(1730, groundY - 155);
+            addCoin(2310, groundY - 85); addCoin(2480, groundY - 145); addCoin(2630, groundY - 205);
+            addCoin(2670, groundY - 205); addCoin(2850, groundY - 155); addCoin(3170, groundY - 165);
+            addCoin(3530, groundY - 135); addCoin(3570, groundY - 135);
 
-            function addEnemy(xx, yy){ enemies.push({ x: xx, y: yy, w: 28, h: 28, direction: 1, speed: 1.1 }); }
-            addEnemy(450, groundY - 28); addEnemy(700, groundY - 128); addEnemy(1400, groundY - 148);
-            addEnemy(1750, groundY - 28); addEnemy(2350, groundY - 88); addEnemy(2650, groundY - 208);
-            addEnemy(3000, groundY - 28); addEnemy(3200, groundY - 168); addEnemy(3550, groundY - 28);
+            function addEnemy(xx, yy){ enemies.push({ x: xx, y: yy, w: 26, h: 26, direction: 1, speed: 1.15 }); }
+            addEnemy(450, groundY - 26); addEnemy(700, groundY - 126); addEnemy(1400, groundY - 146);
+            addEnemy(1750, groundY - 26); addEnemy(2350, groundY - 86); addEnemy(2650, groundY - 206);
+            addEnemy(3000, groundY - 26); addEnemy(3200, groundY - 166); addEnemy(3550, groundY - 26);
             
             player.x = 80;
             player.y = platforms[0].y - PLAYER_HEIGHT;
@@ -343,7 +350,7 @@
             
             if(player.x < 10) player.x = 10;
             if(player.x + player.width > LEVEL_WIDTH - 10) player.x = LEVEL_WIDTH - player.width;
-            if(player.y > BASE_HEIGHT + 50) loseLife();
+            if(player.y > BASE_HEIGHT + 60) loseLife();
         }
         
         function updateEnemies(){
@@ -422,7 +429,6 @@
         }
         
         function updateCamera(){
-            // Логический размер экрана в ширину зависит от пропорций текущего дисплея телефона
             let virtualWidth = canvas.width / scaleFactor;
             let targetX = player.x + player.width/2 - virtualWidth/2;
             targetX = Math.min(targetX, LEVEL_WIDTH - virtualWidth);
@@ -490,7 +496,6 @@
         function draw(){
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Включаем глобальное масштабирование рендера под текущую высоту экрана
             ctx.save();
             ctx.scale(scaleFactor, scaleFactor);
             
@@ -501,7 +506,7 @@
             // Облака
             ctx.fillStyle = "#fcf9ee";
             for(let i=0; i<20; i++){ 
-                ctx.fillRect(80 + i * 320 - cameraX * 0.2, 30 + (i % 4) * 25, 80, 35); 
+                ctx.fillRect(80 + i * 320 - cameraX * 0.2, 25 + (i % 4) * 20, 80, 30); 
             }
             
             // Платформы
@@ -509,10 +514,10 @@
                 let dx = plat.x - cameraX;
                 if(plat.type === 'ground'){
                     ctx.fillStyle = "#735135"; ctx.fillRect(dx, plat.y, plat.w, plat.h);
-                    ctx.fillStyle = "#4fa745"; ctx.fillRect(dx, plat.y, plat.w, 7);
+                    ctx.fillStyle = "#4fa745"; ctx.fillRect(dx, plat.y, plat.w, 6);
                 } else {
                     ctx.fillStyle = "#b36b39"; ctx.fillRect(dx, plat.y, plat.w, plat.h);
-                    ctx.fillStyle = "#ffaa66"; ctx.fillRect(dx, plat.y, plat.w, 4);
+                    ctx.fillStyle = "#ffaa66"; ctx.fillRect(dx, plat.y, plat.w, 3);
                 }
             }
             
@@ -527,27 +532,27 @@
             // Враги
             for(let e of enemies){
                 let dx = e.x - cameraX;
-                ctx.fillStyle = "#a83232"; ctx.fillRect(dx, e.y, 28, 28);
-                ctx.fillStyle = "#fff"; ctx.fillRect(dx+4, e.y+6, 6, 6); ctx.fillRect(dx+16, e.y+6, 6, 6);
-                ctx.fillStyle = "#000"; ctx.fillRect(dx+6, e.y+8, 3, 3); ctx.fillRect(dx+18, e.y+8, 3, 3);
-                ctx.fillRect(dx+8, e.y+18, 12, 3);
+                ctx.fillStyle = "#a83232"; ctx.fillRect(dx, e.y, 26, 26);
+                ctx.fillStyle = "#fff"; ctx.fillRect(dx+4, e.y+5, 5, 5); ctx.fillRect(dx+15, e.y+5, 5, 5);
+                ctx.fillStyle = "#000"; ctx.fillRect(dx+5, e.y+7, 2, 2); ctx.fillRect(dx+16, e.y+7, 2, 2);
+                ctx.fillRect(dx+7, e.y+16, 12, 2);
             }
             
             // Игрок
             let px = player.x - cameraX; 
             drawSkin(ctx, px, player.y, player.facingRight, currentSkin);
             
-            // Финишный флаг
+            // Флаг финиша
             let fx = LEVEL_WIDTH - 120 - cameraX;
-            ctx.fillStyle = "#333"; ctx.fillRect(fx, BASE_HEIGHT - 148, 6, 100);
-            ctx.fillStyle = "#ff3333"; ctx.fillRect(fx + 6, BASE_HEIGHT - 148, 35, 22);
+            ctx.fillStyle = "#333"; ctx.fillRect(fx, BASE_HEIGHT - 122, 5, 90);
+            ctx.fillStyle = "#ff3333"; ctx.fillRect(fx + 5, BASE_HEIGHT - 122, 32, 20);
             
-            // Экран Проигрыша
+            // Окно Game Over
             if(!gameRunning && lives <= 0){
                 let vw = canvas.width / scaleFactor;
-                ctx.fillStyle = "rgba(0,0,0,0.65)"; ctx.fillRect(0, 0, vw, BASE_HEIGHT);
-                ctx.font = "bold 28px monospace"; ctx.fillStyle = "#FFD966"; ctx.fillText("ИГРА ОКОНЧЕНА", vw/2 - 110, BASE_HEIGHT/2 - 20);
-                ctx.font = "16px monospace"; ctx.fillStyle = "white"; ctx.fillText("Нажмите кнопку 'СНАЧАЛА'", vw/2 - 105, BASE_HEIGHT/2 + 20);
+                ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 0, vw, BASE_HEIGHT);
+                ctx.font = "bold 26px monospace"; ctx.fillStyle = "#FFD966"; ctx.fillText("ИГРА ОКОНЧЕНА", vw/2 - 100, BASE_HEIGHT/2 - 15);
+                ctx.font = "14px monospace"; ctx.fillStyle = "white"; ctx.fillText("Нажмите кнопку 'СНАЧАЛА'", vw/2 - 95, BASE_HEIGHT/2 + 20);
             }
             
             ctx.restore();
@@ -565,7 +570,7 @@
                 handleInput(); applyCollision(); updateEnemies(); updateCoins(); updateCamera();
                 if(player.x >= LEVEL_WIDTH - 140){
                     gameRunning = false;
-                    alert(`🎉 КАРТА ПРОЙДЕНА!\nВы собрали: ${score} звёзд.`);
+                    alert(`🎉 КАРТА ПРОЙДЕНА!\nЗвёзд собрано: ${score}.`);
                 }
             }
             draw(); requestAnimationFrame(gameLoop);
@@ -573,7 +578,7 @@
         
         function init(){
             window.addEventListener('resize', resizeCanvas);
-            window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 200); });
+            window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 250); });
             resizeCanvas(); 
             
             const setupTouchButton = (element, pressCallback, releaseCallback) => {
