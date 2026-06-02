@@ -2,176 +2,237 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Jump — Скины всей компании | Огромная карта</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Super Jump Mobile — Горизонтальный режим</title>
     <style>
         * {
+            box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* Отключает зум и скролл страницы при игре */
         }
 
         body {
-            background: linear-gradient(135deg, #0b2b44 0%, #0a1f30 100%);
+            background-color: #000;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            font-family: monospace;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            font-family: 'Courier New', 'VT323', 'Segoe UI', monospace;
-            margin: 0;
-            padding: 15px;
         }
 
-        .game-wrapper {
-            background: #000;
-            padding: 12px;
-            border-radius: 28px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 4px rgba(255,255,255,0.1);
+        /* Контейнер игры подгоняется под размеры экрана телефона */
+        .game-container {
+            position: relative;
             width: 100%;
-            max-width: 950px;
+            height: 100%;
+            max-width: 100vh; /* Сохраняем пропорции 2:1 или близкие к ним */
+            aspect-ratio: 2 / 1;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         canvas {
             display: block;
-            margin: 0 auto;
-            border-radius: 16px;
-            cursor: pointer;
-            box-shadow: 0 0 0 3px #ffd966, 0 0 0 6px #b97f10;
             width: 100%;
-            height: auto;
+            height: 100%;
+            background: #6cbce2;
         }
 
-        .top-panel {
+        /* Верхняя панель со статистикой и выбором скинов */
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            padding: 8px 18px;
-            background: #2c1e12;
-            border-radius: 60px;
-            color: #f9e45b;
-            text-shadow: 2px 2px 0 #6b3e00;
-            font-weight: bold;
-            font-size: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
+            padding: 0 20px;
+            z-index: 10;
+            pointer-events: none; /* Пропускает нажатия к холсту, если нужно */
         }
 
         .stats {
-            display: flex;
-            gap: 24px;
+            background: rgba(44, 30, 18, 0.85);
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: #f9e45b;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            pointer-events: auto;
         }
 
         .skin-selector {
             display: flex;
-            gap: 6px;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 12px;
-            border-radius: 40px;
-            flex-wrap: wrap;
-            justify-content: center;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 20px;
+            pointer-events: auto;
+            overflow-x: auto;
+            max-width: 60%;
         }
 
         .skin-btn {
             background: #3d2b1a;
             border: none;
-            font-size: 14px;
-            padding: 5px 10px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: all 0.1s ease;
-            box-shadow: 0 3px 0 #5a3e1a;
-            font-family: monospace;
-            font-weight: bold;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 15px;
             color: #ffec80;
+            font-weight: bold;
+            white-space: nowrap;
         }
 
         .skin-btn.active {
             background: #f5b642;
             color: #2c1a0a;
             box-shadow: 0 0 8px gold;
-            transform: scale(1.02);
         }
 
-        .skin-btn:active {
-            transform: translateY(2px);
+        /* Мобильные кнопки управления (Геймпад поверх экрана) */
+        .touch-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 10;
         }
 
-        .controls {
+        .d-pad {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-pad {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        /* Стилизация экранных кнопок под пальцы */
+        .ctrl-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 24px;
+            font-weight: bold;
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
         }
 
-        button {
-            background: #2d2b1f;
-            border: none;
-            font-size: 18px;
+        .ctrl-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.92);
+        }
+
+        /* Вспомогательные системные кнопки (по центру снизу) */
+        .system-pad {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .sys-btn {
+            background: rgba(40, 40, 40, 0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            font-size: 11px;
+            padding: 6px 12px;
+            border-radius: 10px;
             font-weight: bold;
-            font-family: monospace;
-            color: #ffec80;
-            padding: 8px 18px;
-            border-radius: 50px;
-            box-shadow: 0 5px 0 #5a3e1a;
-            cursor: pointer;
-            transition: 0.05s linear;
-            touch-action: manipulation;
         }
+        
+        .sys-btn.restart { background: rgba(165, 63, 43, 0.8); }
 
-        button:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 #5a3e1a;
-        }
-
-        .screenshot-btn {
-            background: #2a5f6e;
-            box-shadow: 0 5px 0 #1a3f48;
-        }
-
-        .restart-btn {
-            background: #a53f2b;
+        /* Предупреждение о необходимости перевернуть экран */
+        .orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b2b44;
             color: white;
-            box-shadow: 0 5px 0 #562012;
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
         }
 
-        @media (max-width: 750px) {
-            .top-panel { font-size: 14px; padding: 6px 12px; }
-            .stats { gap: 12px; }
-            .skin-btn { font-size: 11px; padding: 3px 5px; }
-            button { font-size: 14px; padding: 6px 10px; }
+        @media (orientation: portrait) {
+            .orientation-warning { display: flex; }
         }
     </style>
 </head>
 <body>
-<div>
-    <div class="game-wrapper">
-        <canvas id="gameCanvas" width="900" height="450"></canvas>
-        <div class="top-panel">
+
+    <!-- Экран предупреждения -->
+    <div class="orientation-warning">
+        <div style="font-size: 50px;">🔄</div>
+        <h2 style="margin-top: 15px;">Пожалуйста, переверните телефон</h2>
+        <p>Для удобного управления игра работает только в горизонтальном режиме!</p>
+    </div>
+
+    <!-- Основной контейнер игры -->
+    <div class="game-container">
+        <!-- Верхняя панель -->
+        <div class="top-bar">
             <div class="stats">
-                <span>⭐ МОНЕТЫ: <span id="coinCounter">0</span></span>
-                <span>❤️ ЖИЗНИ: <span id="livesCounter">3</span></span>
+                ⭐ <span id="coinCounter">0</span> | ❤️ <span id="livesCounter">3</span>
             </div>
             <div class="skin-selector" id="skinSelector">
-                <button class="skin-btn active" data-skin="5">😎 Друг 1</button>
-                <button class="skin-btn" data-skin="6">⚡ Друг 2</button>
-                <button class="skin-btn" data-skin="7">🕶️ Друг 3</button>
-                <button class="skin-btn" data-skin="8">🕺 Друг 4</button>
-                <button class="skin-btn" data-skin="9">👓 Друг 5</button>
+                <button class="skin-btn active" data-skin="5">😎 Д1</button>
+                <button class="skin-btn" data-skin="6">⚡ Д2</button>
+                <button class="skin-btn" data-skin="7">🕶️ Д3</button>
+                <button class="skin-btn" data-skin="8">🕺 Д4</button>
+                <button class="skin-btn" data-skin="9">👓 Д5</button>
             </div>
         </div>
-        <div class="controls">
-            <button id="leftBtn">◀ ЛЕВО</button>
-            <button id="rightBtn">ПРАВО ▶</button>
-            <button id="jumpBtn">ПРЫЖОК 🦘</button>
-            <button id="screenshotBtn" class="screenshot-btn">📸 ФОТО СКИНА</button>
-            <button id="restartBtn" class="restart-btn">🔄 ЗАНОВО</button>
-        </div>
-        <div style="text-align: center; margin-top: 12px; font-size: 13px; color:#ffe2a4;">
-            **🎮 ← → / A/D | ПРОБЕЛ — прыжок | Все 5 друзей добавлены как скины по фотографиям!**
+
+        <!-- Холст игры -->
+        <canvas id="gameCanvas" width="900" height="450"></canvas>
+
+        <!-- Сенсорный джойстик поверх экрана -->
+        <div class="touch-controls">
+            <!-- Левая рука: Движение -->
+            <div class="d-pad">
+                <div class="ctrl-btn" id="btnLeft">◀</div>
+                <div class="ctrl-btn" id="btnRight">▶</div>
+            </div>
+
+            <!-- Центр: системные функции -->
+            <div class="system-pad">
+                <button class="sys-btn" id="btnScreenshot">📸 ФОТО</button>
+                <button class="sys-btn restart" id="btnRestart">🔄 ЗАНОВО</button>
+            </div>
+
+            <!-- Правая рука: Прыжок -->
+            <div class="action-pad">
+                <div class="ctrl-btn" id="btnJump" style="width: 75px; height: 75px; background: rgba(245, 182, 66, 0.4); border-color: rgba(245, 182, 66, 0.6);">▲</div>
+            </div>
         </div>
     </div>
-</div>
 
 <script>
     (function(){
@@ -181,7 +242,7 @@
         let gameRunning = true;
         let score = 0;
         let lives = 3;
-        let currentSkin = 5; // По умолчанию Друг 1
+        let currentSkin = 5; 
         
         const PLAYER_WIDTH = 30;
         const PLAYER_HEIGHT = 30;
@@ -409,110 +470,64 @@
             cameraX = targetX;
         }
         
-        // ========== ОТРИСОВКА 5 СКИНОЙ ДРУЗЕЙ ПО ФОТО ==========
         function drawSkin(ctx, x, y, facingRight, skinId){
-            
-            // --- СKИН 5: Друг в белой футболке (слева на групповом и селфи) ---
+            // Друг 1
             if(skinId === 5){  
-                ctx.fillStyle = "#f3ccb0"; 
-                ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
-                ctx.fillStyle = "#1a1310"; // Брюнет, короткая челка
-                ctx.fillRect(x+2, y-3, PLAYER_WIDTH-4, 8);
+                ctx.fillStyle = "#f3ccb0"; ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#1a1310"; ctx.fillRect(x+2, y-3, PLAYER_WIDTH-4, 8);
                 ctx.fillRect(x+3, y+4, 6, 4); ctx.fillRect(x+11, y+4, 12, 3); ctx.fillRect(x+21, y+4, 6, 4);
-                ctx.fillStyle = "#ffffff"; // Белая футболка
-                ctx.fillRect(x, y+16, PLAYER_WIDTH, 11);
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(x, y+16, PLAYER_WIDTH, 11);
                 ctx.fillStyle = "#e6e6e6"; ctx.fillRect(x+7, y+16, 16, 3);
-                ctx.fillStyle = "#111111"; // Черные шорты/джинсы
-                ctx.fillRect(x+4, y+27, 8, 4); ctx.fillRect(x+18, y+27, 8, 4);
-                
-                // Глаза и брови
+                ctx.fillStyle = "#111111"; ctx.fillRect(x+4, y+27, 8, 4); ctx.fillRect(x+18, y+27, 8, 4);
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(x+6, y+9, 5, 4); ctx.fillRect(x+19, y+9, 5, 4);
                 ctx.fillStyle = "#1c120c"; ctx.fillRect(x+7+(facingRight?1:-1), y+10, 3, 3); ctx.fillRect(x+20+(facingRight?1:-1), y+10, 3, 3);
-                ctx.fillStyle = "#1a1310"; ctx.fillRect(x+5, y+7, 7, 2); ctx.fillRect(x+18, y+7, 7, 2);
                 return;
             }
-            
-            // --- СКИН 6: Друг в худи с граффити/узорами (по центру на групповом и селфи) ---
+            // Друг 2
             if(skinId === 6){  
-                ctx.fillStyle = "#fcd0b0"; 
-                ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
-                ctx.fillStyle = "#80593f"; // Шатен, объемные волосы
-                ctx.fillRect(x+1, y-4, PLAYER_WIDTH-2, 9); 
-                ctx.fillStyle = "#9c7459"; 
-                ctx.fillRect(x+3, y+2, 8, 4); ctx.fillRect(x+13, y+1, 10, 5);
-                
-                ctx.fillStyle = "#141416"; // Зипка с узорами
-                ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
-                ctx.fillStyle = "#ffffff"; // Граффити-штрихи
-                ctx.fillRect(x+2, y+18, 3, 2); ctx.fillRect(x+14, y+17, 2, 4); ctx.fillRect(x+22, y+20, 5, 2);
-                ctx.fillStyle = "#404045"; ctx.fillRect(x+13, y+16, 4, 12); // Молния
+                ctx.fillStyle = "#fcd0b0"; ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#80593f"; ctx.fillRect(x+1, y-4, PLAYER_WIDTH-2, 9); 
+                ctx.fillStyle = "#9c7459"; ctx.fillRect(x+3, y+2, 8, 4); ctx.fillRect(x+13, y+1, 10, 5);
+                ctx.fillStyle = "#141416"; ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(x+2, y+18, 3, 2); ctx.fillRect(x+14, y+17, 2, 4); ctx.fillRect(x+22, y+20, 5, 2);
+                ctx.fillStyle = "#404045"; ctx.fillRect(x+13, y+16, 4, 12);
                 ctx.fillStyle = "#0c0c0e"; ctx.fillRect(x+3, y+28, 8, 3); ctx.fillRect(x+19, y+28, 8, 3);
-                
-                // Серо-голубые глаза
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(x+5, y+9, 5, 4); ctx.fillRect(x+19, y+9, 5, 4);
                 ctx.fillStyle = "#467285"; ctx.fillRect(x+6+(facingRight?1:0), y+10, 3, 3); ctx.fillRect(x+20+(facingRight?1:0), y+10, 3, 3);
                 return;
             }
-
-            // --- СКИН 7: Высокий друг в темных очках и полосатой футболке (на заднем плане) ---
+            // Друг 3
             if(skinId === 7){  
-                ctx.fillStyle = "#fad1b0"; 
-                ctx.fillRect(x+4, y+4, PLAYER_WIDTH-8, PLAYER_HEIGHT-4);
-                ctx.fillStyle = "#5c4033"; // Каштановые волосы с челкой
-                ctx.fillRect(x+2, y-4, PLAYER_WIDTH-4, 9);
-                
-                // Полосатая футболка (сине-голубые полосы)
+                ctx.fillStyle = "#fad1b0"; ctx.fillRect(x+4, y+4, PLAYER_WIDTH-8, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#5c4033"; ctx.fillRect(x+2, y-4, PLAYER_WIDTH-4, 9);
                 ctx.fillStyle = "#2b5c8f"; ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
-                ctx.fillStyle = "#6ca0dc"; 
-                ctx.fillRect(x, y+18, PLAYER_WIDTH, 3); ctx.fillRect(x, y+24, PLAYER_WIDTH, 3);
+                ctx.fillStyle = "#6ca0dc"; ctx.fillRect(x, y+18, PLAYER_WIDTH, 3); ctx.fillRect(x, y+24, PLAYER_WIDTH, 3);
                 ctx.fillStyle = "#151515"; ctx.fillRect(x+4, y+28, 7, 3); ctx.fillRect(x+19, y+28, 7, 3);
-
-                // Стильные темные солнцезащитные очки прямоугольной формы
-                ctx.fillStyle = "#1a1a24"; 
-                ctx.fillRect(x+2, y+8, 11, 6); ctx.fillRect(x+17, y+8, 11, 6);
-                ctx.fillStyle = "#555"; ctx.fillRect(x+13, y+10, 4, 2); // Переносица очков
+                ctx.fillStyle = "#1a1a24"; ctx.fillRect(x+2, y+8, 11, 6); ctx.fillRect(x+17, y+8, 11, 6);
+                ctx.fillStyle = "#555"; ctx.fillRect(x+13, y+10, 4, 2);
                 return;
             }
-
-            // --- СКИН 8: Друг сзади справа (брюнет с прической шторки) ---
+            // Друг 4
             if(skinId === 8){  
-                ctx.fillStyle = "#ebd0b9"; 
-                ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
-                
-                // Черные волосы, разделенные на две стороны (шторки)
-                ctx.fillStyle = "#111111"; 
-                ctx.fillRect(x+1, y-3, PLAYER_WIDTH-2, 8);
-                ctx.fillRect(x+2, y+5, 7, 6); ctx.fillRect(x+21, y+5, 7, 6); // Пряди по бокам
-                
-                ctx.fillStyle = "#1c1c1e"; // Черная классическая футболка
-                ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#ebd0b9"; ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#111111"; ctx.fillRect(x+1, y-3, PLAYER_WIDTH-2, 8);
+                ctx.fillRect(x+2, y+5, 7, 6); ctx.fillRect(x+21, y+5, 7, 6);
+                ctx.fillStyle = "#1c1c1e"; ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
                 ctx.fillStyle = "#2c3539"; ctx.fillRect(x+4, y+28, 7, 3); ctx.fillRect(x+19, y+28, 7, 3);
-
-                // Темные глаза
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(x+5, y+10, 5, 4); ctx.fillRect(x+20, y+10, 5, 4);
                 ctx.fillStyle = "#221915"; ctx.fillRect(x+6, y+11, 3, 3); ctx.fillRect(x+21, y+11, 3, 3);
                 return;
             }
-
-            // --- СКИН 9: Друг на переднем плане справа в прозрачных очках для зрения ---
+            // Друг 5
             if(skinId === 9){  
-                ctx.fillStyle = "#fcdcb5"; 
-                ctx.fillRect(x+2, y+4, PLAYER_WIDTH-4, PLAYER_HEIGHT-4);
-                ctx.fillStyle = "#2d2522"; // Короткие темные волосы
-                ctx.fillRect(x+1, y-3, PLAYER_WIDTH-2, 8);
-                
-                ctx.fillStyle = "#1f2421"; // Темно-синяя / черная футболка
-                ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#fcdcb5"; ctx.fillRect(x+2, y+4, PLAYER_WIDTH-4, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#2d2522"; ctx.fillRect(x+1, y-3, PLAYER_WIDTH-2, 8);
+                ctx.fillStyle = "#1f2421"; ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
                 ctx.fillStyle = "#111"; ctx.fillRect(x+3, y+28, 8, 3); ctx.fillRect(x+19, y+28, 8, 3);
-
-                // Глаза и Крупные очки в черной оправе
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(x+4, y+9, 8, 6); ctx.fillRect(x+18, y+9, 8, 6);
-                ctx.fillStyle = "#111111"; // Зрачки
-                ctx.fillRect(x+6+(facingRight?1:-1), y+11, 3, 3); ctx.fillRect(x+20+(facingRight?1:-1), y+11, 3, 3);
-                // Черная рамка очков
-                ctx.strokeStyle = "#000000"; ctx.lineWidth = 1.5;
-                ctx.strokeRect(x+3, y+8, 9, 8); ctx.strokeRect(x+17, y+8, 9, 8);
-                ctx.fillStyle = "#000"; ctx.fillRect(x+12, y+11, 6, 2); // Дужка
+                ctx.fillStyle = "#111111"; ctx.fillRect(x+6+(facingRight?1:-1), y+11, 3, 3); ctx.fillRect(x+20+(facingRight?1:-1), y+11, 3, 3);
+                ctx.strokeStyle = "#000000"; ctx.lineWidth = 1.5; ctx.strokeRect(x+3, y+8, 9, 8); ctx.strokeRect(x+17, y+8, 9, 8);
+                ctx.fillStyle = "#000"; ctx.fillRect(x+12, y+11, 6, 2);
                 return;
             }
         }
@@ -564,16 +579,15 @@
             
             if(!gameRunning){
                 ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-                ctx.font = "bold 36px monospace"; ctx.fillStyle = "#FFD966"; ctx.fillText("ИГРА ОКОНЧЕНА", canvas.width/2-130, 180);
-                ctx.font = "20px monospace"; ctx.fillStyle = "white"; ctx.fillText("Нажми кнопку ЗАНОВО", canvas.width/2-110, 230);
+                ctx.font = "bold 28px monospace"; ctx.fillStyle = "#FFD966"; ctx.fillText("ИГРА ОКОНЧЕНА", canvas.width/2-110, 180);
+                ctx.font = "16px monospace"; ctx.fillStyle = "white"; ctx.fillText("Нажми кнопку ЗАНОВО", canvas.width/2-85, 220);
             }
         }
         
         function takeScreenshot(){
             const link = document.createElement('a');
             const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
-            let skinNames = {5:"Friend1", 6:"Friend2", 7:"Friend3", 8:"Friend4", 9:"Friend5"};
-            link.download = `super_jump_${skinNames[currentSkin] || 'skin'}_${timestamp}.png`;
+            link.download = `super_jump_skin_${currentSkin}_${timestamp}.png`;
             link.href = canvas.toDataURL(); link.click();
         }
         
@@ -582,7 +596,7 @@
                 handleInput(); applyCollision(); updateEnemies(); updateCoins(); updateCamera();
                 if(player.x >= LEVEL_WIDTH - 120){
                     gameRunning = false;
-                    alert(`🎉 ПОБЕДА! Карта пройдена!\nВы собрали отличный результат! Счёт: ${score} очков.`);
+                    alert(`🎉 ПОБЕДА! Карта пройдена!\nСчёт: ${score} очков.`);
                 }
             }
             draw(); requestAnimationFrame(gameLoop);
@@ -591,53 +605,45 @@
         function init(){
             buildLevel(); updateUI();
             
-            document.addEventListener('keydown', function(e) {
-                const key = e.key;
-                if(key === 'ArrowLeft' || key === 'a' || key === 'A') { leftPressed = true; e.preventDefault(); }
-                if(key === 'ArrowRight' || key === 'd' || key === 'D') { rightPressed = true; e.preventDefault(); }
-                if(key === ' ' || key === 'Space' || key === 'ArrowUp' || key === 'w' || key === 'W') { jumpKeyPressed = true; e.preventDefault(); }
-            });
+            // Фикс поддержки мультитача на кнопках
+            const setupTouchButton = (element, pressCallback, releaseCallback) => {
+                element.addEventListener('touchstart', (e) => { pressCallback(); e.preventDefault(); }, {passive: false});
+                element.addEventListener('touchend', (e) => { releaseCallback(); e.preventDefault(); }, {passive: false});
+                // Для тестов на ПК
+                element.addEventListener('mousedown', (e) => { pressCallback(); });
+                element.addEventListener('mouseup', () => { releaseCallback(); });
+            };
+
+            setupTouchButton(document.getElementById('btnLeft'), () => { leftPressed = true; }, () => { leftPressed = false; });
+            setupTouchButton(document.getElementById('btnRight'), () => { rightPressed = true; }, () => { rightPressed = false; });
+            setupTouchButton(document.getElementById('btnJump'), () => { jumpKeyPressed = true; }, () => { jumpKeyPressed = false; canJump = true; });
+
+            document.getElementById('btnRestart').addEventListener('click', restartGame);
+            document.getElementById('btnScreenshot').addEventListener('click', takeScreenshot);
             
-            document.addEventListener('keyup', function(e) {
-                const key = e.key;
-                if(key === 'ArrowLeft' || key === 'a' || key === 'A') { leftPressed = false; }
-                if(key === 'ArrowRight' || key === 'd' || key === 'D') { rightPressed = false; }
-                if(key === ' ' || key === 'Space' || key === 'ArrowUp' || key === 'w' || key === 'W') { jumpKeyPressed = false; canJump = true; }
-            });
-            
-            const leftBtn = document.getElementById('leftBtn');
-            const rightBtn = document.getElementById('rightBtn');
-            const jumpBtn = document.getElementById('jumpBtn');
-            const restartBtn = document.getElementById('restartBtn');
-            const screenshotBtn = document.getElementById('screenshotBtn');
-            
-            leftBtn.addEventListener('mousedown', (e) => { leftPressed = true; e.preventDefault(); });
-            leftBtn.addEventListener('mouseup', () => { leftPressed = false; });
-            leftBtn.addEventListener('touchstart', (e) => { leftPressed = true; e.preventDefault(); });
-            leftBtn.addEventListener('touchend', () => { leftPressed = false; });
-            
-            rightBtn.addEventListener('mousedown', (e) => { rightPressed = true; e.preventDefault(); });
-            rightBtn.addEventListener('mouseup', () => { rightPressed = false; });
-            rightBtn.addEventListener('touchstart', (e) => { rightPressed = true; e.preventDefault(); });
-            rightBtn.addEventListener('touchend', () => { rightPressed = false; });
-            
-            jumpBtn.addEventListener('mousedown', (e) => { jumpKeyPressed = true; e.preventDefault(); });
-            jumpBtn.addEventListener('mouseup', () => { jumpKeyPressed = false; canJump = true; });
-            jumpBtn.addEventListener('touchstart', (e) => { jumpKeyPressed = true; e.preventDefault(); });
-            jumpBtn.addEventListener('touchend', () => { jumpKeyPressed = false; canJump = true; });
-            
-            restartBtn.addEventListener('click', restartGame);
-            screenshotBtn.addEventListener('click', takeScreenshot);
-            
+            // Выбор скинов кнопками
             const skinBtns = document.querySelectorAll('.skin-btn');
             skinBtns.forEach((btn) => {
-                const select = () => {
+                const select = (e) => {
                     currentSkin = parseInt(btn.dataset.skin);
                     skinBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
+                    if(e) e.preventDefault();
                 };
                 btn.addEventListener('click', select);
-                btn.addEventListener('touchstart', (e) => { select(); e.preventDefault(); });
+                btn.addEventListener('touchstart', select, {passive: false});
+            });
+            
+            // Клавиатура для ПК
+            document.addEventListener('keydown', function(e) {
+                if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') leftPressed = true;
+                if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') rightPressed = true;
+                if(e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') jumpKeyPressed = true;
+            });
+            document.addEventListener('keyup', function(e) {
+                if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') leftPressed = false;
+                if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') leftPressed = false;
+                if(e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { jumpKeyPressed = false; canJump = true; }
             });
             
             gameLoop();
