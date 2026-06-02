@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Super Jump — Скины всей компании | Огромная карта</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0b2b44 0%, #0a1f30 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', 'VT323', 'Segoe UI', monospace;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .game-wrapper {
+            background: #000;
+            padding: 12px;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 4px rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 950px;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 0 0 3px #ffd966, 0 0 0 6px #b97f10;
+            width: 100%;
+            height: auto;
+        }
+
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 18px;
+            background: #2c1e12;
+            border-radius: 60px;
+            color: #f9e45b;
+            text-shadow: 2px 2px 0 #6b3e00;
+            font-weight: bold;
+            font-size: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .skin-selector {
+            display: flex;
+            gap: 6px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 12px;
+            border-radius: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .skin-btn {
+            background: #3d2b1a;
+            border: none;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 3px 0 #5a3e1a;
+            font-family: monospace;
+            font-weight: bold;
+            color: #ffec80;
+        }
+
+        .skin-btn.active {
+            background: #f5b642;
+            color: #2c1a0a;
+            box-shadow: 0 0 8px gold;
+            transform: scale(1.02);
+        }
+
+        .skin-btn:active {
+            transform: translateY(2px);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #2d2b1f;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: monospace;
+            color: #ffec80;
+            padding: 8px 18px;
+            border-radius: 50px;
+            box-shadow: 0 5px 0 #5a3e1a;
+            cursor: pointer;
+            transition: 0.05s linear;
+            touch-action: manipulation;
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #5a3e1a;
+        }
+
+        .screenshot-btn {
+            background: #2a5f6e;
+            box-shadow: 0 5px 0 #1a3f48;
+        }
+
+        .restart-btn {
+            background: #a53f2b;
+            color: white;
+            box-shadow: 0 5px 0 #562012;
+        }
+
+        @media (max-width: 750px) {
+            .top-panel { font-size: 14px; padding: 6px 12px; }
+            .stats { gap: 12px; }
+            .skin-btn { font-size: 11px; padding: 3px 5px; }
+            button { font-size: 14px; padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-wrapper">
+        <canvas id="gameCanvas" width="900" height="450"></canvas>
+        <div class="top-panel">
+            <div class="stats">
+                <span>⭐ МОНЕТЫ: <span id="coinCounter">0</span></span>
+                <span>❤️ ЖИЗНИ: <span id="livesCounter">3</span></span>
+            </div>
+            <div class="skin-selector" id="skinSelector">
+                <button class="skin-btn active" data-skin="5">😎 Друг 1</button>
+                <button class="skin-btn" data-skin="6">⚡ Друг 2</button>
+                <button class="skin-btn" data-skin="7">🕶️ Друг 3</button>
+                <button class="skin-btn" data-skin="8">🕺 Друг 4</button>
+                <button class="skin-btn" data-skin="9">👓 Друг 5</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="leftBtn">◀ ЛЕВО</button>
+            <button id="rightBtn">ПРАВО ▶</button>
+            <button id="jumpBtn">ПРЫЖОК 🦘</button>
+            <button id="screenshotBtn" class="screenshot-btn">📸 ФОТО СКИНА</button>
+            <button id="restartBtn" class="restart-btn">🔄 ЗАНОВО</button>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 13px; color:#ffe2a4;">
+            **🎮 ← → / A/D | ПРОБЕЛ — прыжок | Все 5 друзей добавлены как скины по фотографиям!**
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameRunning = true;
+        let score = 0;
+        let lives = 3;
+        let currentSkin = 5; // По умолчанию Друг 1
+        
+        const PLAYER_WIDTH = 30;
+        const PLAYER_HEIGHT = 30;
+        let player = {
+            x: 80,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            width: PLAYER_WIDTH,
+            height: PLAYER_HEIGHT,
+            grounded: false,
+            facingRight: true
+        };
+        
+        const GRAVITY = 0.8;
+        const JUMP_POWER = -11.5;
+        const WALK_ACC = 0.9;
+        const MAX_SPEED = 5.5;
+        const LEVEL_WIDTH = 3500; 
+        
+        let platforms = [];
+        let coins = [];
+        let enemies = [];
+        let cameraX = 0;
+        
+        let leftPressed = false;
+        let rightPressed = false;
+        let jumpKeyPressed = false;
+        let canJump = true;
+        
+        function buildLevel(){
+            platforms = [];
+            coins = [];
+            enemies = [];
+            const groundY = canvas.height - 48;
+            
+            platforms.push({ x: 0, y: groundY, w: 900, h: 24, type: 'ground' });
+            platforms.push({ x: 1050, y: groundY, w: 800, h: 24, type: 'ground' });
+            platforms.push({ x: 2050, y: groundY, w: 1500, h: 24, type: 'ground' });
+            
+            // Платформы
+            platforms.push({ x: 200, y: groundY - 45, w: 90, h: 20 });
+            platforms.push({ x: 340, y: groundY - 90, w: 90, h: 20 });
+            platforms.push({ x: 480, y: groundY - 140, w: 100, h: 20 });
+            platforms.push({ x: 480, y: groundY - 45, w: 40, h: 20 }); 
+            platforms.push({ x: 650, y: groundY - 100, w: 110, h: 20 });
+            platforms.push({ x: 790, y: groundY - 150, w: 80, h: 20 });
+
+            platforms.push({ x: 920, y: groundY - 80, w: 60, h: 18 });
+            platforms.push({ x: 1000, y: groundY - 130, w: 40, h: 18 });
+
+            platforms.push({ x: 1120, y: groundY - 50, w: 90, h: 20 });
+            platforms.push({ x: 1260, y: groundY - 110, w: 120, h: 20 });
+            platforms.push({ x: 1430, y: groundY - 165, w: 80, h: 20 });
+            platforms.push({ x: 1300, y: groundY - 230, w: 60, h: 18 }); 
+            platforms.push({ x: 1560, y: groundY - 120, w: 100, h: 20 });
+            platforms.push({ x: 1700, y: groundY - 60, w: 110, h: 20 });
+
+            platforms.push({ x: 1860, y: groundY - 40, w: 40, h: 18 });
+            platforms.push({ x: 1920, y: groundY - 95, w: 50, h: 18 });
+            platforms.push({ x: 1990, y: groundY - 140, w: 45, h: 18 });
+
+            platforms.push({ x: 2100, y: groundY - 70, w: 120, h: 20 });
+            platforms.push({ x: 2280, y: groundY - 120, w: 80, h: 20 });
+            platforms.push({ x: 2400, y: groundY - 180, w: 150, h: 20 }); 
+            platforms.push({ x: 2600, y: groundY - 130, w: 100, h: 20 });
+            platforms.push({ x: 2750, y: groundY - 80, w: 90, h: 20 });
+            platforms.push({ x: 2900, y: groundY - 130, w: 120, h: 20 });
+            platforms.push({ x: 3080, y: groundY - 180, w: 80, h: 20 });
+            platforms.push({ x: 3220, y: groundY - 110, w: 140, h: 20 }); 
+            
+            function addCoin(xx, yy){ coins.push({ x: xx, y: yy, w: 12, h: 12, collected: false }); }
+            
+            addCoin(230, groundY - 70); addCoin(370, groundY - 115);
+            addCoin(500, groundY - 165); addCoin(530, groundY - 165);
+            addCoin(680, groundY - 125); addCoin(810, groundY - 175);
+            addCoin(940, groundY - 110); addCoin(1010, groundY - 160);
+            addCoin(1150, groundY - 75);
+            addCoin(1280, groundY - 135); addCoin(1320, groundY - 135);
+            addCoin(1320, groundY - 255); 
+            addCoin(1460, groundY - 190); addCoin(1600, groundY - 145);
+            addCoin(2130, groundY - 95); addCoin(2160, groundY - 95);
+            addCoin(2310, groundY - 145);
+            addCoin(2430, groundY - 205); addCoin(2470, groundY - 205); addCoin(2510, groundY - 205);
+            addCoin(2630, groundY - 155); addCoin(2780, groundY - 105);
+            addCoin(2930, groundY - 155); addCoin(2970, groundY - 155);
+            addCoin(3110, groundY - 205);
+            addCoin(3250, groundY - 135); addCoin(3290, groundY - 135); addCoin(3330, groundY - 135);
+
+            function addEnemy(xx, yy){ enemies.push({ x: xx, y: yy, w: 28, h: 28, direction: 1, speed: 0.95 }); }
+            addEnemy(400, groundY - 28);
+            addEnemy(700, groundY - 128);
+            addEnemy(1150, groundY - 28);
+            addEnemy(1260, groundY - 138);
+            addEnemy(1600, groundY - 28);
+            addEnemy(2110, groundY - 98);
+            addEnemy(2420, groundY - 208); 
+            addEnemy(2500, groundY - 28);
+            addEnemy(2800, groundY - 28);
+            addEnemy(2920, groundY - 158);
+            addEnemy(3250, groundY - 28);
+            
+            player.x = 80;
+            player.y = platforms[0].y - PLAYER_HEIGHT;
+            player.vx = 0;
+            player.vy = 0;
+            player.grounded = true;
+        }
+        
+        function applyCollision(){
+            player.vy += GRAVITY;
+            player.x += player.vx;
+            
+            for(let plat of platforms){
+                if(player.x < plat.x + plat.w && player.x + player.width > plat.x &&
+                   player.y + player.height > plat.y && player.y < plat.y + plat.h){
+                    if(player.vx > 0) player.x = plat.x - player.width;
+                    else if(player.vx < 0) player.x = plat.x + plat.w;
+                    if(player.vx !== 0) player.vx = 0;
+                }
+            }
+            
+            player.y += player.vy;
+            player.grounded = false;
+            
+            for(let plat of platforms){
+                if(player.x < plat.x + plat.w && player.x + player.width > plat.x &&
+                   player.y + player.height > plat.y && player.y < plat.y + plat.h){
+                    if(player.vy >= 0 && (player.y + player.height - player.vy) <= plat.y + 14){
+                        player.y = plat.y - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    } 
+                    else if(player.vy < 0){
+                        player.y = plat.y + plat.h;
+                        player.vy = 0;
+                    }
+                }
+            }
+            
+            if(player.x < 15) player.x = 15;
+            if(player.x + player.width > LEVEL_WIDTH - 15) player.x = LEVEL_WIDTH - player.width;
+            if(player.y + player.height > canvas.height + 60) loseLife();
+        }
+        
+        function updateEnemies(){
+            for(let i=0; i<enemies.length; i++){
+                const e = enemies[i];
+                let newX = e.x + e.direction * e.speed;
+                
+                let willCollide = false;
+                for(let plat of platforms){
+                    if(newX + e.w > plat.x && newX < plat.x + plat.w &&
+                       e.y + e.h > plat.y && e.y < plat.y + plat.h){
+                        willCollide = true;
+                        break;
+                    }
+                }
+                
+                if(willCollide){ e.direction *= -1; newX = e.x + e.direction * e.speed; }
+                e.x = newX;
+                
+                let onGround = false;
+                for(let plat of platforms){
+                    if(e.x + e.w > plat.x && e.x < plat.x + plat.w &&
+                       e.y + e.h >= plat.y && e.y + e.h <= plat.y + 8){
+                        onGround = true;
+                        break;
+                    }
+                }
+                if(!onGround && e.y + e.h < canvas.height - 20) e.direction *= -1;
+                
+                if(gameRunning && player.x < e.x + e.w && player.x + player.width > e.x &&
+                   player.y < e.y + e.h && player.y + player.height > e.y){
+                    if(player.vy > 0 && player.y + player.height - player.vy <= e.y + 12){
+                        enemies.splice(i,1); i--; player.vy = -8.5; score += 2; updateUI();
+                    } else { loseLife(); }
+                }
+            }
+        }
+        
+        function updateCoins(){
+            for(let i=0; i<coins.length; i++){
+                const c = coins[i];
+                if(!c.collected && player.x < c.x + c.w && player.x + player.width > c.x &&
+                   player.y < c.y + c.h && player.y + player.height > c.y){
+                    c.collected = true; score++; updateUI();
+                }
+            }
+        }
+        
+        function loseLife(){
+            if(!gameRunning) return;
+            lives--; updateUI();
+            if(lives <= 0){ gameRunning = false; } 
+            else {
+                player.x = 80; player.y = platforms[0].y - PLAYER_HEIGHT;
+                player.vx = 0; player.vy = 0; player.grounded = true; canJump = true; cameraX = 0;
+            }
+        }
+        
+        function restartGame(){
+            gameRunning = true; lives = 3; score = 0;
+            buildLevel(); updateUI();
+            leftPressed = false; rightPressed = false; jumpKeyPressed = false; canJump = true;
+        }
+        
+        function updateUI(){
+            document.getElementById('coinCounter').innerText = score;
+            document.getElementById('livesCounter').innerText = lives;
+        }
+        
+        function handleInput(){
+            if(!gameRunning) return;
+            if(leftPressed){ player.vx = Math.max(-MAX_SPEED, player.vx - WALK_ACC); player.facingRight = false; }
+            if(rightPressed){ player.vx = Math.min(MAX_SPEED, player.vx + WALK_ACC); player.facingRight = true; }
+            if(!leftPressed && !rightPressed){ player.vx *= 0.88; if(Math.abs(player.vx) < 0.05) player.vx = 0; }
+            if(jumpKeyPressed && player.grounded && canJump){ player.vy = JUMP_POWER; player.grounded = false; canJump = false; }
+        }
+        
+        function updateCamera(){
+            let targetX = player.x + player.width/2 - canvas.width/2;
+            targetX = Math.min(targetX, LEVEL_WIDTH - canvas.width);
+            targetX = Math.max(targetX, 0);
+            cameraX = targetX;
+        }
+        
+        // ========== ОТРИСОВКА 5 СКИНОЙ ДРУЗЕЙ ПО ФОТО ==========
+        function drawSkin(ctx, x, y, facingRight, skinId){
+            
+            // --- СKИН 5: Друг в белой футболке (слева на групповом и селфи) ---
+            if(skinId === 5){  
+                ctx.fillStyle = "#f3ccb0"; 
+                ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#1a1310"; // Брюнет, короткая челка
+                ctx.fillRect(x+2, y-3, PLAYER_WIDTH-4, 8);
+                ctx.fillRect(x+3, y+4, 6, 4); ctx.fillRect(x+11, y+4, 12, 3); ctx.fillRect(x+21, y+4, 6, 4);
+                ctx.fillStyle = "#ffffff"; // Белая футболка
+                ctx.fillRect(x, y+16, PLAYER_WIDTH, 11);
+                ctx.fillStyle = "#e6e6e6"; ctx.fillRect(x+7, y+16, 16, 3);
+                ctx.fillStyle = "#111111"; // Черные шорты/джинсы
+                ctx.fillRect(x+4, y+27, 8, 4); ctx.fillRect(x+18, y+27, 8, 4);
+                
+                // Глаза и брови
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(x+6, y+9, 5, 4); ctx.fillRect(x+19, y+9, 5, 4);
+                ctx.fillStyle = "#1c120c"; ctx.fillRect(x+7+(facingRight?1:-1), y+10, 3, 3); ctx.fillRect(x+20+(facingRight?1:-1), y+10, 3, 3);
+                ctx.fillStyle = "#1a1310"; ctx.fillRect(x+5, y+7, 7, 2); ctx.fillRect(x+18, y+7, 7, 2);
+                return;
+            }
+            
+            // --- СКИН 6: Друг в худи с граффити/узорами (по центру на групповом и селфи) ---
+            if(skinId === 6){  
+                ctx.fillStyle = "#fcd0b0"; 
+                ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#80593f"; // Шатен, объемные волосы
+                ctx.fillRect(x+1, y-4, PLAYER_WIDTH-2, 9); 
+                ctx.fillStyle = "#9c7459"; 
+                ctx.fillRect(x+3, y+2, 8, 4); ctx.fillRect(x+13, y+1, 10, 5);
+                
+                ctx.fillStyle = "#141416"; // Зипка с узорами
+                ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#ffffff"; // Граффити-штрихи
+                ctx.fillRect(x+2, y+18, 3, 2); ctx.fillRect(x+14, y+17, 2, 4); ctx.fillRect(x+22, y+20, 5, 2);
+                ctx.fillStyle = "#404045"; ctx.fillRect(x+13, y+16, 4, 12); // Молния
+                ctx.fillStyle = "#0c0c0e"; ctx.fillRect(x+3, y+28, 8, 3); ctx.fillRect(x+19, y+28, 8, 3);
+                
+                // Серо-голубые глаза
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(x+5, y+9, 5, 4); ctx.fillRect(x+19, y+9, 5, 4);
+                ctx.fillStyle = "#467285"; ctx.fillRect(x+6+(facingRight?1:0), y+10, 3, 3); ctx.fillRect(x+20+(facingRight?1:0), y+10, 3, 3);
+                return;
+            }
+
+            // --- СКИН 7: Высокий друг в темных очках и полосатой футболке (на заднем плане) ---
+            if(skinId === 7){  
+                ctx.fillStyle = "#fad1b0"; 
+                ctx.fillRect(x+4, y+4, PLAYER_WIDTH-8, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#5c4033"; // Каштановые волосы с челкой
+                ctx.fillRect(x+2, y-4, PLAYER_WIDTH-4, 9);
+                
+                // Полосатая футболка (сине-голубые полосы)
+                ctx.fillStyle = "#2b5c8f"; ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#6ca0dc"; 
+                ctx.fillRect(x, y+18, PLAYER_WIDTH, 3); ctx.fillRect(x, y+24, PLAYER_WIDTH, 3);
+                ctx.fillStyle = "#151515"; ctx.fillRect(x+4, y+28, 7, 3); ctx.fillRect(x+19, y+28, 7, 3);
+
+                // Стильные темные солнцезащитные очки прямоугольной формы
+                ctx.fillStyle = "#1a1a24"; 
+                ctx.fillRect(x+2, y+8, 11, 6); ctx.fillRect(x+17, y+8, 11, 6);
+                ctx.fillStyle = "#555"; ctx.fillRect(x+13, y+10, 4, 2); // Переносица очков
+                return;
+            }
+
+            // --- СКИН 8: Друг сзади справа (брюнет с прической шторки) ---
+            if(skinId === 8){  
+                ctx.fillStyle = "#ebd0b9"; 
+                ctx.fillRect(x+3, y+4, PLAYER_WIDTH-6, PLAYER_HEIGHT-4);
+                
+                // Черные волосы, разделенные на две стороны (шторки)
+                ctx.fillStyle = "#111111"; 
+                ctx.fillRect(x+1, y-3, PLAYER_WIDTH-2, 8);
+                ctx.fillRect(x+2, y+5, 7, 6); ctx.fillRect(x+21, y+5, 7, 6); // Пряди по бокам
+                
+                ctx.fillStyle = "#1c1c1e"; // Черная классическая футболка
+                ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#2c3539"; ctx.fillRect(x+4, y+28, 7, 3); ctx.fillRect(x+19, y+28, 7, 3);
+
+                // Темные глаза
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(x+5, y+10, 5, 4); ctx.fillRect(x+20, y+10, 5, 4);
+                ctx.fillStyle = "#221915"; ctx.fillRect(x+6, y+11, 3, 3); ctx.fillRect(x+21, y+11, 3, 3);
+                return;
+            }
+
+            // --- СКИН 9: Друг на переднем плане справа в прозрачных очках для зрения ---
+            if(skinId === 9){  
+                ctx.fillStyle = "#fcdcb5"; 
+                ctx.fillRect(x+2, y+4, PLAYER_WIDTH-4, PLAYER_HEIGHT-4);
+                ctx.fillStyle = "#2d2522"; // Короткие темные волосы
+                ctx.fillRect(x+1, y-3, PLAYER_WIDTH-2, 8);
+                
+                ctx.fillStyle = "#1f2421"; // Темно-синяя / черная футболка
+                ctx.fillRect(x, y+16, PLAYER_WIDTH, 12);
+                ctx.fillStyle = "#111"; ctx.fillRect(x+3, y+28, 8, 3); ctx.fillRect(x+19, y+28, 8, 3);
+
+                // Глаза и Крупные очки в черной оправе
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(x+4, y+9, 8, 6); ctx.fillRect(x+18, y+9, 8, 6);
+                ctx.fillStyle = "#111111"; // Зрачки
+                ctx.fillRect(x+6+(facingRight?1:-1), y+11, 3, 3); ctx.fillRect(x+20+(facingRight?1:-1), y+11, 3, 3);
+                // Черная рамка очков
+                ctx.strokeStyle = "#000000"; ctx.lineWidth = 1.5;
+                ctx.strokeRect(x+3, y+8, 9, 8); ctx.strokeRect(x+17, y+8, 9, 8);
+                ctx.fillStyle = "#000"; ctx.fillRect(x+12, y+11, 6, 2); // Дужка
+                return;
+            }
+        }
+        
+        function draw(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = "#6cbce2"; ctx.fillRect(0,0,canvas.width,canvas.height);
+            
+            ctx.fillStyle = "#fcf9ee";
+            for(let i=0; i<15; i++){ ctx.fillRect(80 + i*280 - cameraX*0.25, 35 + (i%3)*20, 75, 35); }
+            
+            for(let plat of platforms){
+                let dx = plat.x - cameraX;
+                if(dx + plat.w < 0 || dx > canvas.width) continue;
+                if(plat.type === 'ground'){
+                    ctx.fillStyle = "#735135"; ctx.fillRect(dx, plat.y, plat.w, plat.h);
+                    ctx.fillStyle = "#4fa745"; ctx.fillRect(dx, plat.y, plat.w, 6);
+                } else {
+                    ctx.fillStyle = "#b36b39"; ctx.fillRect(dx, plat.y, plat.w, plat.h);
+                    ctx.fillStyle = "#ffaa66"; ctx.fillRect(dx, plat.y, plat.w, 4);
+                }
+            }
+            
+            for(let c of coins){
+                if(c.collected) continue;
+                let dx = c.x - cameraX;
+                if(dx+12 > 0 && dx < canvas.width){
+                    ctx.fillStyle = "#FFD966"; ctx.beginPath(); ctx.ellipse(dx+6, c.y+6, 7, 7, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#b8860b"; ctx.font = "bold 11px monospace"; ctx.fillText("★", dx+3, c.y+10);
+                }
+            }
+            
+            for(let e of enemies){
+                let dx = e.x - cameraX;
+                if(dx+28 > 0 && dx < canvas.width){
+                    ctx.fillStyle = "#a83232"; ctx.fillRect(dx, e.y, 28, 28);
+                    ctx.fillStyle = "#fff"; ctx.fillRect(dx+4, e.y+6, 6, 6); ctx.fillRect(dx+16, e.y+6, 6, 6);
+                    ctx.fillStyle = "#000"; ctx.fillRect(dx+6, e.y+8, 3, 3); ctx.fillRect(dx+18, e.y+8, 3, 3);
+                    ctx.fillRect(dx+8, e.y+18, 12, 3);
+                }
+            }
+            
+            let px = player.x - cameraX; let py = player.y;
+            drawSkin(ctx, px, py, player.facingRight, currentSkin);
+            
+            let fx = LEVEL_WIDTH - 100 - cameraX;
+            ctx.fillStyle = "#333"; ctx.fillRect(fx, canvas.height - 148, 6, 100);
+            ctx.fillStyle = "#ff3333"; ctx.fillRect(fx + 6, canvas.height - 148, 30, 20);
+            
+            if(!gameRunning){
+                ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.font = "bold 36px monospace"; ctx.fillStyle = "#FFD966"; ctx.fillText("ИГРА ОКОНЧЕНА", canvas.width/2-130, 180);
+                ctx.font = "20px monospace"; ctx.fillStyle = "white"; ctx.fillText("Нажми кнопку ЗАНОВО", canvas.width/2-110, 230);
+            }
+        }
+        
+        function takeScreenshot(){
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+            let skinNames = {5:"Friend1", 6:"Friend2", 7:"Friend3", 8:"Friend4", 9:"Friend5"};
+            link.download = `super_jump_${skinNames[currentSkin] || 'skin'}_${timestamp}.png`;
+            link.href = canvas.toDataURL(); link.click();
+        }
+        
+        function gameLoop(){
+            if(gameRunning){
+                handleInput(); applyCollision(); updateEnemies(); updateCoins(); updateCamera();
+                if(player.x >= LEVEL_WIDTH - 120){
+                    gameRunning = false;
+                    alert(`🎉 ПОБЕДА! Карта пройдена!\nВы собрали отличный результат! Счёт: ${score} очков.`);
+                }
+            }
+            draw(); requestAnimationFrame(gameLoop);
+        }
+        
+        function init(){
+            buildLevel(); updateUI();
+            
+            document.addEventListener('keydown', function(e) {
+                const key = e.key;
+                if(key === 'ArrowLeft' || key === 'a' || key === 'A') { leftPressed = true; e.preventDefault(); }
+                if(key === 'ArrowRight' || key === 'd' || key === 'D') { rightPressed = true; e.preventDefault(); }
+                if(key === ' ' || key === 'Space' || key === 'ArrowUp' || key === 'w' || key === 'W') { jumpKeyPressed = true; e.preventDefault(); }
+            });
+            
+            document.addEventListener('keyup', function(e) {
+                const key = e.key;
+                if(key === 'ArrowLeft' || key === 'a' || key === 'A') { leftPressed = false; }
+                if(key === 'ArrowRight' || key === 'd' || key === 'D') { rightPressed = false; }
+                if(key === ' ' || key === 'Space' || key === 'ArrowUp' || key === 'w' || key === 'W') { jumpKeyPressed = false; canJump = true; }
+            });
+            
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            const jumpBtn = document.getElementById('jumpBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const screenshotBtn = document.getElementById('screenshotBtn');
+            
+            leftBtn.addEventListener('mousedown', (e) => { leftPressed = true; e.preventDefault(); });
+            leftBtn.addEventListener('mouseup', () => { leftPressed = false; });
+            leftBtn.addEventListener('touchstart', (e) => { leftPressed = true; e.preventDefault(); });
+            leftBtn.addEventListener('touchend', () => { leftPressed = false; });
+            
+            rightBtn.addEventListener('mousedown', (e) => { rightPressed = true; e.preventDefault(); });
+            rightBtn.addEventListener('mouseup', () => { rightPressed = false; });
+            rightBtn.addEventListener('touchstart', (e) => { rightPressed = true; e.preventDefault(); });
+            rightBtn.addEventListener('touchend', () => { rightPressed = false; });
+            
+            jumpBtn.addEventListener('mousedown', (e) => { jumpKeyPressed = true; e.preventDefault(); });
+            jumpBtn.addEventListener('mouseup', () => { jumpKeyPressed = false; canJump = true; });
+            jumpBtn.addEventListener('touchstart', (e) => { jumpKeyPressed = true; e.preventDefault(); });
+            jumpBtn.addEventListener('touchend', () => { jumpKeyPressed = false; canJump = true; });
+            
+            restartBtn.addEventListener('click', restartGame);
+            screenshotBtn.addEventListener('click', takeScreenshot);
+            
+            const skinBtns = document.querySelectorAll('.skin-btn');
+            skinBtns.forEach((btn) => {
+                const select = () => {
+                    currentSkin = parseInt(btn.dataset.skin);
+                    skinBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+                btn.addEventListener('click', select);
+                btn.addEventListener('touchstart', (e) => { select(); e.preventDefault(); });
+            });
+            
+            gameLoop();
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
